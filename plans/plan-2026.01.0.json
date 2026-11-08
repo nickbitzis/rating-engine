@@ -1,0 +1,324 @@
+{
+  "version": "2026.01.0",
+  "effective_date": "2026-01-01",
+  "status": "in_force",
+  "description": "Plan in force since 2026-01-01. Built in 2025 from one-way analysis: coarse age and mileage bands, stale territory and credit relativities.",
+  "sha256": "40ecc1f09086360187e61796b95112f4e050036d5b3626c178aed065d5596568",
+  "base_rate": 573.36,
+  "factors": [
+    {
+      "name": "age_band",
+      "input": "driver_age",
+      "levels": [
+        {
+          "label": "16-20",
+          "min": 16,
+          "max": 20,
+          "relativity": 1.95
+        },
+        {
+          "label": "21-24",
+          "min": 21,
+          "max": 24,
+          "relativity": 1.45
+        },
+        {
+          "label": "25-29",
+          "min": 25,
+          "max": 29,
+          "relativity": 1.18
+        },
+        {
+          "label": "30-64",
+          "min": 30,
+          "max": 64,
+          "relativity": 1.0
+        },
+        {
+          "label": "65-74",
+          "min": 65,
+          "max": 74,
+          "relativity": 1.04
+        },
+        {
+          "label": "75+",
+          "min": 75,
+          "max": 95,
+          "relativity": 1.22
+        }
+      ]
+    },
+    {
+      "name": "experience",
+      "input": "years_licensed",
+      "levels": [
+        {
+          "label": "0-2",
+          "min": 0,
+          "max": 2,
+          "relativity": 1.2
+        },
+        {
+          "label": "3+",
+          "min": 3,
+          "max": null,
+          "relativity": 1.0
+        }
+      ]
+    },
+    {
+      "name": "vehicle_age",
+      "input": "vehicle_age",
+      "levels": [
+        {
+          "label": "0-5",
+          "min": 0,
+          "max": 5,
+          "relativity": 1.0
+        },
+        {
+          "label": "6-10",
+          "min": 6,
+          "max": 10,
+          "relativity": 0.94
+        },
+        {
+          "label": "11+",
+          "min": 11,
+          "max": null,
+          "relativity": 0.88
+        }
+      ]
+    },
+    {
+      "name": "value_band",
+      "input": "vehicle_value",
+      "levels": [
+        {
+          "label": "<15k",
+          "min": 0,
+          "max": 14999,
+          "relativity": 0.88
+        },
+        {
+          "label": "15-30k",
+          "min": 15000,
+          "max": 29999,
+          "relativity": 1.0
+        },
+        {
+          "label": "30-50k",
+          "min": 30000,
+          "max": 49999,
+          "relativity": 1.15
+        },
+        {
+          "label": "50k+",
+          "min": 50000,
+          "max": null,
+          "relativity": 1.35
+        }
+      ]
+    },
+    {
+      "name": "territory",
+      "input": "territory",
+      "levels": [
+        {
+          "label": "1",
+          "values": [
+            1
+          ],
+          "relativity": 0.82
+        },
+        {
+          "label": "2",
+          "values": [
+            2
+          ],
+          "relativity": 0.88
+        },
+        {
+          "label": "3",
+          "values": [
+            3
+          ],
+          "relativity": 0.94
+        },
+        {
+          "label": "4",
+          "values": [
+            4
+          ],
+          "relativity": 1.0
+        },
+        {
+          "label": "5",
+          "values": [
+            5
+          ],
+          "relativity": 1.04
+        },
+        {
+          "label": "6",
+          "values": [
+            6
+          ],
+          "relativity": 1.09
+        },
+        {
+          "label": "7",
+          "values": [
+            7
+          ],
+          "relativity": 1.16
+        },
+        {
+          "label": "8",
+          "values": [
+            8
+          ],
+          "relativity": 1.24
+        },
+        {
+          "label": "9",
+          "values": [
+            9
+          ],
+          "relativity": 1.34
+        },
+        {
+          "label": "10",
+          "values": [
+            10
+          ],
+          "relativity": 1.4
+        }
+      ]
+    },
+    {
+      "name": "mileage",
+      "input": "annual_mileage",
+      "levels": [
+        {
+          "label": "<7.5k",
+          "min": 0,
+          "max": 7499,
+          "relativity": 0.9
+        },
+        {
+          "label": "7.5-15k",
+          "min": 7500,
+          "max": 14999,
+          "relativity": 1.0
+        },
+        {
+          "label": "15k+",
+          "min": 15000,
+          "max": null,
+          "relativity": 1.15
+        }
+      ]
+    },
+    {
+      "name": "prior_claims",
+      "input": "prior_claims",
+      "levels": [
+        {
+          "label": "0",
+          "min": 0,
+          "max": 0,
+          "relativity": 1.0
+        },
+        {
+          "label": "1",
+          "min": 1,
+          "max": 1,
+          "relativity": 1.25
+        },
+        {
+          "label": "2+",
+          "min": 2,
+          "max": null,
+          "relativity": 1.5
+        }
+      ]
+    },
+    {
+      "name": "credit_band",
+      "input": "credit_band",
+      "levels": [
+        {
+          "label": "1",
+          "values": [
+            1
+          ],
+          "relativity": 0.9
+        },
+        {
+          "label": "2",
+          "values": [
+            2
+          ],
+          "relativity": 0.95
+        },
+        {
+          "label": "3",
+          "values": [
+            3
+          ],
+          "relativity": 1.0
+        },
+        {
+          "label": "4",
+          "values": [
+            4
+          ],
+          "relativity": 1.08
+        },
+        {
+          "label": "5",
+          "values": [
+            5
+          ],
+          "relativity": 1.18
+        }
+      ]
+    },
+    {
+      "name": "coverage",
+      "input": "coverage",
+      "levels": [
+        {
+          "label": "liability",
+          "values": [
+            "liability"
+          ],
+          "relativity": 0.68
+        },
+        {
+          "label": "standard",
+          "values": [
+            "standard"
+          ],
+          "relativity": 1.0
+        },
+        {
+          "label": "full",
+          "values": [
+            "full"
+          ],
+          "relativity": 1.28
+        }
+      ]
+    }
+  ],
+  "discounts": [
+    {
+      "name": "multi_policy",
+      "input": "multi_policy",
+      "rate": 0.1
+    }
+  ],
+  "notes": {}
+}

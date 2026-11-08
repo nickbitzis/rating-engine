@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rating Engine</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #fcfcfb; --text: #0b0b0b; --muted: #52514e; --faint: #8a8984; --border: #e2e1dc;
+  --grid: #ecebe7; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --good: #11804f; --bad: #b42318;
+  --radius: 10px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111110; --panel: #1a1a19; --text: #f0efec; --muted: #c3c2b7; --faint: #8f8e86; --border: #2e2e2b;
+    --grid: #262624; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --good: #4ccb8f; --bad: #ff8a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111110; --panel: #1a1a19; --text: #f0efec; --muted: #c3c2b7; --faint: #8f8e86; --border: #2e2e2b;
+  --grid: #262624; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --good: #4ccb8f; --bad: #ff8a7a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; }
+header { padding: 18px 24px 6px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 13px; margin: 0 0 4px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.muted { color: var(--muted); }
+main { padding: 8px 24px 24px; display: grid; gap: 16px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; min-width: 0; }
+.s2 { grid-column: span 2; } .s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s6 { grid-column: span 6; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.kpi .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 5px 10px; }
+.seg button[aria-pressed="true"] { background: var(--text); color: var(--panel); }
+button, select, input { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; }
+button { cursor: pointer; }
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.mult h3 { font-size: 13px; margin: 0 0 2px; font-weight: 600; }
+.mult .note { font-size: 11.5px; color: var(--faint); margin-bottom: 2px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.axis line, .axis path { stroke: var(--border); }
+.gridline { stroke: var(--grid); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+.legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c); }
+.legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
+.legend i.ring { width: 9px; height: 9px; border-radius: 2px; background: transparent; border: 2px solid var(--c); transform: rotate(45deg); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 5px 8px; border-top: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; border-top: 0; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; max-width: 100%; }
+.up { color: var(--bad); } .down { color: var(--good); }
+form.rater { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+form.rater label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+form.rater input, form.rater select { width: 100%; }
+.premium { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); }
+.pass { color: var(--good); } .fail { color: var(--bad); }
+.err { color: var(--bad); font-size: 13px; }
+#tip { position: fixed; pointer-events: none; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 10; max-width: 260px; font-variant-numeric: tabular-nums; }
+footer { padding: 0 24px 24px; color: var(--faint); font-size: 12px; }
+@media (max-width: 900px) {
+  main { grid-template-columns: minmax(0, 1fr); padding: 8px 16px 16px; }
+  header, footer { padding-left: 16px; padding-right: 16px; }
+  .s2, .s3, .s4, .s6 { grid-column: span 1; }
+  .multiples { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Rating Engine</h1>
+  <span class="muted">Harrow Lane Mutual (fictional), personal auto, synthetic data</span>
+  <span class="chip" id="meta">loading</span>
+</header>
+<main>
+  <section class="panel s6">
+    <h2>Proposed plan <span id="pv"></span> vs in-force <span id="cv"></span></h2>
+    <p class="sub">Earned premium on the experience period. Target loss ratio 70%.</p>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section class="panel s6">
+    <h2>Relativities: fitted vs true</h2>
+    <p class="sub">Each factor relative to its base level (fixed at 1.00). Bars are 95% intervals from the GLM. True values come from the data generator.</p>
+    <div class="row">
+      <div class="seg" id="relkind">
+        <button data-k="freq" aria-pressed="true">Frequency</button>
+        <button data-k="sev" aria-pressed="false">Severity</button>
+        <button data-k="pp" aria-pressed="false">Pure premium</button>
+      </div>
+    </div>
+    <div class="legend"><span><i class="dot" style="--c:var(--s1)"></i>Fitted, with 95% interval</span><span><i class="ring" style="--c:var(--s2)"></i>True</span></div>
+    <div class="multiples" id="rels"></div>
+  </section>
+
+  <section class="panel s3">
+    <h2>Lift chart (holdout)</h2>
+    <p class="sub">Policies sorted by GLM predicted loss cost, ten groups of equal exposure.</p>
+    <div class="legend"><span><i style="--c:var(--s1)"></i>Predicted</span><span><i style="--c:var(--s2)"></i>Actual</span></div>
+    <div id="lift"></div>
+    <p class="sub" id="ginis"></p>
+  </section>
+
+  <section class="panel s3">
+    <h2>Double lift: current vs proposed (holdout)</h2>
+    <p class="sub">Sorted by proposed / current premium. Each line rebased to its own average. The plan that tracks actual wins.</p>
+    <div class="legend"><span><i style="--c:var(--s3)"></i>Actual loss cost</span><span><i style="--c:var(--s2)"></i>Current plan</span><span><i style="--c:var(--s1)"></i>Proposed plan</span></div>
+    <div id="dlift"></div>
+    <p class="sub" id="dliftnote"></p>
+  </section>
+
+  <section class="panel s4">
+    <h2>Premium change per policy</h2>
+    <p class="sub" id="histnote">Count of policy-years by change from the current plan.</p>
+    <div class="row">
+      <span class="muted">Rate cap on increases</span>
+      <div class="seg" id="capsel">
+        <button data-c="0.10" aria-pressed="false">10%</button>
+        <button data-c="0.15" aria-pressed="true">15%</button>
+        <button data-c="0.25" aria-pressed="false">25%</button>
+        <button data-c="" aria-pressed="false">None</button>
+      </div>
+    </div>
+    <div class="legend"><span><i class="dot" style="--c:var(--s1)"></i>Policies, after the cap</span></div>
+    <div id="hist"></div>
+  </section>
+
+  <section class="panel s2">
+    <h2>Cost of the cap</h2>
+    <div id="capcost"></div>
+  </section>
+
+  <section class="panel s3">
+    <h2>Impact by territory</h2>
+    <div class="scroll" id="seg-territory"></div>
+  </section>
+  <section class="panel s3">
+    <h2>Impact by age band</h2>
+    <div class="scroll" id="seg-driver_age"></div>
+  </section>
+
+  <section class="panel s6">
+    <h2>Rate a policy</h2>
+    <p class="sub">Every step of the premium: base rate times each relativity times discounts, with the plan version and hash.</p>
+    <form class="rater" id="rater">
+      <label>Driver age<input name="driver_age" type="number" min="16" max="95" value="22"></label>
+      <label>Years licensed<input name="years_licensed" type="number" min="0" max="79" value="4"></label>
+      <label>Vehicle age<input name="vehicle_age" type="number" min="0" max="40" value="2"></label>
+      <label>Vehicle value ($)<input name="vehicle_value" type="number" min="500" step="500" value="31000"></label>
+      <label>Territory<select name="territory"></select></label>
+      <label>Annual mileage<input name="annual_mileage" type="number" min="0" step="500" value="16000"></label>
+      <label>Prior claims (3 yrs)<input name="prior_claims" type="number" min="0" max="20" value="1"></label>
+      <label>Credit-like band<select name="credit_band"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></label>
+      <label>Multi-policy<select name="multi_policy"><option value="false">No</option><option value="true">Yes</option></select></label>
+      <label>Coverage<select name="coverage"><option>liability</option><option>standard</option><option selected>full</option></select></label>
+      <label>Plan version<select name="plan_version" id="planver"></select></label>
+      <label>&nbsp;<button type="submit">Rate</button></label>
+    </form>
+    <div id="rated" style="margin-top:14px"></div>
+  </section>
+
+  <section class="panel s3">
+    <h2>Model comparison (frequency)</h2>
+    <p class="sub">Poisson GLM, log link, log exposure offset. Holdout deviance is on 30% of policies not used to fit.</p>
+    <div class="scroll" id="cmp-frequency"></div>
+    <h2 style="margin-top:14px">Model comparison (severity)</h2>
+    <p class="sub">Gamma GLM on average cost per claim, weighted by claim count.</p>
+    <div class="scroll" id="cmp-severity"></div>
+  </section>
+  <section class="panel s3">
+    <h2>Pure premium models (holdout)</h2>
+    <p class="sub">Gradient boosting is a lift benchmark only. It does not produce a rating table.</p>
+    <div class="scroll" id="cmp-pp"></div>
+    <h2 style="margin-top:14px">Loss ratio by territory</h2>
+    <div class="scroll" id="lr"></div>
+  </section>
+
+  <section class="panel s6">
+    <h2>Actual vs expected, age band x territory (holdout)</h2>
+    <p class="sub">Actual losses divided by GLM expected losses. Close to 1.00 means no missing interaction. Small cells are noisy.</p>
+    <div class="scroll" id="ae2"></div>
+  </section>
+</main>
+<footer>Educational demo on synthetic data. Not actuarial advice. <span id="foot"></span></footer>
+<div id="tip" role="tooltip"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const themeParam = new URLSearchParams(location.search).get("theme");
+if (themeParam === "light" || themeParam === "dark") document.documentElement.dataset.theme = themeParam;
+const fmt = (x, d = 2) => (x == null ? "" : Number(x).toFixed(d));
+const pct = (x, d = 1) => (x == null ? "" : (x >= 0 ? "+" : "") + (x * 100).toFixed(d) + "%");
+const money = (x, d = 0) => "$" + Number(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const NS = "http://www.w3.org/2000/svg";
+const tip = $("#tip");
+let R = null;
+let relKind = "freq";
+
+function showTip(ev, html) {
+  tip.innerHTML = html;
+  tip.style.display = "block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX + 14, y = ev.clientY + 14;
+  if (x + w > window.innerWidth - 8) x = ev.clientX - w - 14;
+  if (y + h > window.innerHeight - 8) y = ev.clientY - h - 14;
+  tip.style.left = Math.max(8, x) + "px";
+  tip.style.top = Math.max(8, y) + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function niceTicks(lo, hi, n = 4) {
+  const span = hi - lo || 1;
+  const step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => span / s <= n) || 10 * mag;
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+
+// A category chart frame: x bands, one linear y axis, horizontal grid.
+function frame(container, cats, yLo, yHi, opts = {}) {
+  const W = opts.w || 320, H = opts.h || 190, m = { l: 40, r: 8, t: 8, b: opts.rot ? 44 : 24 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.label || "chart" });
+  container.appendChild(svg);
+  const ticks = niceTicks(yLo, yHi);
+  const lo = Math.min(yLo, ticks[0]), hi = Math.max(yHi, ticks[ticks.length - 1]);
+  const y = (v) => m.t + (H - m.t - m.b) * (1 - (v - lo) / (hi - lo));
+  const bw = (W - m.l - m.r) / cats.length;
+  const x = (i) => m.l + bw * (i + 0.5);
+  for (const t of ticks) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), class: "gridline" }, svg);
+    const tx = el("text", { x: m.l - 6, y: y(t) + 3.5, "text-anchor": "end" }, svg);
+    tx.textContent = opts.yfmt ? opts.yfmt(t) : fmt(t, t % 1 ? 2 : 0);
+  }
+  el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, class: "axis", stroke: "var(--border)" }, svg);
+  const every = Math.ceil(cats.length / (opts.maxLabels || 12));
+  cats.forEach((c, i) => {
+    if (i % every) return;
+    const tx = el("text", { x: x(i), y: H - m.b + 14, "text-anchor": opts.rot ? "end" : "middle" }, svg);
+    if (opts.rot) tx.setAttribute("transform", `rotate(-35 ${x(i)} ${H - m.b + 14})`);
+    tx.textContent = c;
+  });
+  return { svg, x, y, bw, m, W, H, lo, hi };
+}
+
+function relCharts() {
+  const box = $("#rels");
+  box.innerHTML = "";
+  const k = relKind;
+  for (const t of R.relativities) {
+    const inModel = k === "freq" ? t.in_frequency : k === "sev" ? t.in_severity : t.in_frequency || t.in_severity;
+    const lv = t.levels;
+    const vals = lv.flatMap((r) => [r[k + "_lo"] ?? r[k], r[k + "_hi"] ?? r[k], r[k + "_true"]]);
+    const lo = Math.min(0.6, ...vals) - 0.05, hi = Math.max(1.4, ...vals) + 0.05;
+    const card = document.createElement("div");
+    card.className = "mult";
+    card.innerHTML = `<h3>${t.factor.replace("_", " ")}</h3><div class="note">${inModel ? "in model" : "not selected: fixed at 1.00"}</div>`;
+    box.appendChild(card);
+    const f = frame(card, lv.map((r) => r.level), lo, hi, { rot: lv.length > 6, label: t.factor + " relativities" });
+    el("line", { x1: f.m.l, x2: f.W - f.m.r, y1: f.y(1), y2: f.y(1), stroke: "var(--faint)", "stroke-dasharray": "3 3" }, f.svg);
+    lv.forEach((r, i) => {
+      const cx = f.x(i);
+      const fitted = r[k], l = r[k + "_lo"], h = r[k + "_hi"], tr = r[k + "_true"];
+      if (!r.base && inModel) el("line", { x1: cx, x2: cx, y1: f.y(l), y2: f.y(h), stroke: "var(--s1)", "stroke-width": 2, "stroke-linecap": "round" }, f.svg);
+      const s = 4.5;
+      el("rect", { x: cx - s, y: f.y(tr) - s, width: 2 * s, height: 2 * s, transform: `rotate(45 ${cx} ${f.y(tr)})`, fill: "none", stroke: "var(--s2)", "stroke-width": 2 }, f.svg);
+      el("circle", { cx, cy: f.y(fitted), r: 4.5, fill: "var(--s1)", stroke: "var(--panel)", "stroke-width": 2 }, f.svg);
+      const hit = el("rect", { x: cx - f.bw / 2, y: f.m.t, width: f.bw, height: f.H - f.m.t - f.m.b, fill: "transparent" }, f.svg);
+      hit.addEventListener("mousemove", (ev) => showTip(ev, `<b>${t.factor} ${r.level}</b>${r.base ? " (base)" : ""}<br>Fitted ${fmt(fitted, 3)}${r.base || !inModel ? "" : ` (${fmt(l, 3)} to ${fmt(h, 3)})`}<br>True ${fmt(tr, 3)}<br>${Math.round(r.exposure).toLocaleString()} car-years, ${Math.round(r.claims).toLocaleString()} claims`));
+      hit.addEventListener("mouseleave", hideTip);
+    });
+  }
+}
+
+function lineChart(container, cats, series, opts) {
+  container.innerHTML = "";
+  const vals = series.flatMap((s) => s.values);
+  const f = frame(container, cats, Math.min(...vals, opts.min ?? Infinity) * 0.95, Math.max(...vals) * 1.05, { w: 460, h: 230, yfmt: opts.yfmt, label: opts.label });
+  for (const s of series) {
+    const d = s.values.map((v, i) => `${i ? "L" : "M"}${f.x(i)},${f.y(v)}`).join("");
+    el("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round" }, f.svg);
+    s.values.forEach((v, i) => el("circle", { cx: f.x(i), cy: f.y(v), r: 4, fill: s.color, stroke: "var(--panel)", "stroke-width": 2 }, f.svg));
+  }
+  const cross = el("line", { y1: f.m.t, y2: f.H - f.m.b, stroke: "var(--faint)", "stroke-width": 1, visibility: "hidden" }, f.svg);
+  cats.forEach((c, i) => {
+    const hit = el("rect", { x: f.x(i) - f.bw / 2, y: f.m.t, width: f.bw, height: f.H - f.m.t - f.m.b, fill: "transparent" }, f.svg);
+    hit.addEventListener("mousemove", (ev) => {
+      cross.setAttribute("x1", f.x(i)); cross.setAttribute("x2", f.x(i)); cross.setAttribute("visibility", "visible");
+      showTip(ev, `<b>${opts.catName} ${c}</b><br>` + series.map((s) => `${s.name}: ${opts.tfmt(s.values[i])}`).join("<br>") + (opts.extra ? opts.extra(i) : ""));
+    });
+    hit.addEventListener("mouseleave", () => { hideTip(); cross.setAttribute("visibility", "hidden"); });
+  });
+}
+
+function histogram(imp) {
+  const box = $("#hist");
+  box.innerHTML = "";
+  const h = imp.histogram_capped;
+  const lab = (b) => b.lo == null ? `< ${pct(b.hi, 0)}` : b.hi == null ? `> ${pct(b.lo, 0)}` : `${pct(b.lo, 0)} to ${pct(b.hi, 0)}`;
+  const short = (b) => b.lo == null ? `<${Math.round(b.hi * 100)}` : b.hi == null ? `>${Math.round(b.lo * 100)}` : `${Math.round(b.hi * 100)}`;
+  const f = frame(box, h.map(short), 0, Math.max(...h.map((b) => b.count)) * 1.05, { w: 620, h: 230, yfmt: (v) => v >= 1000 ? (v / 1000) + "k" : v, label: "premium change histogram" });
+  const bw = Math.max(4, f.bw - 2);
+  h.forEach((b, i) => {
+    const x0 = f.x(i) - bw / 2, y0 = f.y(b.count), y1 = f.y(0);
+    const hgt = Math.max(0, y1 - y0), r = Math.min(4, hgt, bw / 2);
+    const d = `M${x0},${y1}V${y0 + r}Q${x0},${y0} ${x0 + r},${y0}H${x0 + bw - r}Q${x0 + bw},${y0} ${x0 + bw},${y0 + r}V${y1}Z`;
+    el("path", { d, fill: "var(--s1)" }, f.svg);
+    const hit = el("rect", { x: f.x(i) - f.bw / 2, y: f.m.t, width: f.bw, height: f.H - f.m.t - f.m.b, fill: "transparent" }, f.svg);
+    const raw = imp.histogram[i].count;
+    hit.addEventListener("mousemove", (ev) => showTip(ev, `<b>${lab(b)}</b> (upper edge included)<br>${b.count.toLocaleString()} policies after the cap<br>${raw.toLocaleString()} before the cap`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function table(cols, rows) {
+  const head = cols.map((c) => `<th class="${c.num ? "num" : ""}">${c.h}</th>`).join("");
+  const body = rows.map((r) => "<tr>" + cols.map((c) => `<td class="${c.num ? "num" : ""} ${c.cls ? c.cls(r) : ""}">${c.f(r)}</td>`).join("") + "</tr>").join("");
+  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+const chg = (x) => (x > 0.0005 ? "up" : x < -0.0005 ? "down" : "");
+
+function renderImpact(imp) {
+  const c = imp.counts, cc = imp.counts_capped, cap = imp.cap;
+  const capTxt = imp.cap_up == null ? "no cap" : `cap at +${Math.round(imp.cap_up * 100)}%`;
+  $("#histnote").textContent = `Count of ${c.policies.toLocaleString()} policy-years by change from ${imp.current_version} to ${imp.proposed_version}, ${capTxt}. Axis labels are each bin's upper edge in %.`;
+  histogram(imp);
+  $("#capcost").innerHTML = table([{ h: "Measure", f: (r) => r[0] }, { h: "Value", num: true, f: (r) => r[1] }], [
+    ["Rate change, uncapped", pct(cap.rate_change_uncapped)],
+    ["Rate change, " + capTxt, pct(cap.rate_change_capped)],
+    ["Policies capped", cap.policies_capped.toLocaleString()],
+    ["Premium given up", money(cap.net_cost)],
+    ["Share of proposed premium", (cap.net_cost_share_of_proposed * 100).toFixed(1) + "%"],
+    ["Up more than 10%", `${cc.up_more_than.toLocaleString()} (${(cc.up_share * 100).toFixed(1)}%)`],
+    ["Down more than 10%", `${cc.down_more_than.toLocaleString()} (${(cc.down_share * 100).toFixed(1)}%)`],
+    ["Base rate factor to recover", fmt(cap.recovery_factor, 4)],
+  ]);
+  for (const key of ["territory", "driver_age"]) {
+    $("#seg-" + key).innerHTML = table([
+      { h: key === "territory" ? "Zone" : "Age", f: (r) => r.segment },
+      { h: "Policies", num: true, f: (r) => r.policies.toLocaleString() },
+      { h: "Avg current", num: true, f: (r) => money(r.avg_current) },
+      { h: "Avg proposed", num: true, f: (r) => money(r.avg_proposed) },
+      { h: "Change", num: true, f: (r) => pct(r.change), cls: (r) => chg(r.change) },
+      { h: "Capped", num: true, f: (r) => pct(r.change_capped), cls: (r) => chg(r.change_capped) },
+      { h: "Up >10%", num: true, f: (r) => (r.up_share * 100).toFixed(0) + "%" },
+      { h: "Down >10%", num: true, f: (r) => (r.down_share * 100).toFixed(0) + "%" },
+    ], imp.segments[key]);
+  }
+}
+
+async function loadImpact(cap) {
+  const q = `cap_up=${cap === "" ? "none" : cap}`;
+  const imp = await (await fetch(`/api/impact?${q}`)).json();
+  renderImpact(imp);
+}
+
+function renderAll() {
+  const m = R.meta, imp = R.impact, g = R.gate;
+  $("#meta").textContent = `${m.policies.toLocaleString()} policy-years, seed ${m.seed}`;
+  $("#pv").textContent = imp.proposed_version;
+  $("#cv").textContent = imp.current_version;
+  const pp = Object.fromEntries(R.models.pure_premium.map((r) => [r.model, r]));
+  const kp = [
+    [pct(imp.cap.rate_change_uncapped), "overall indicated rate change"],
+    [(R.overall_loss_ratio.current * 100).toFixed(1) + "%", "loss ratio, current plan"],
+    [(imp.counts.up_share * 100).toFixed(1) + "%", "policies up more than 10%"],
+    [(imp.counts.down_share * 100).toFixed(1) + "%", "policies down more than 10%"],
+    [fmt(pp.glm_freq_x_sev.holdout_gini, 3), "GLM holdout Gini"],
+    [`<span class="${g.passed ? "pass" : "fail"}">${g.passed ? "Passed" : "Failed"}</span>`, `release gate (worst error ${(g.worst_relative_error * 100).toFixed(1)}%)`],
+  ];
+  $("#kpis").innerHTML = kp.map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+  relCharts();
+
+  const lift = R.lift;
+  lineChart($("#lift"), lift.map((r) => r.decile), [
+    { name: "Predicted", color: "var(--s1)", values: lift.map((r) => r.predicted) },
+    { name: "Actual", color: "var(--s2)", values: lift.map((r) => r.actual) },
+  ], { min: 0, yfmt: (v) => "$" + v, tfmt: (v) => money(v), catName: "Decile", label: "lift chart" });
+  $("#ginis").textContent = R.models.pure_premium.map((r) => `${r.model.replaceAll("_", " ")} ${fmt(r.holdout_gini, 3)}`).join(", ") + " (holdout Gini).";
+
+  const dl = R.double_lift;
+  lineChart($("#dlift"), dl.map((r) => r.group), [
+    { name: "Actual", color: "var(--s3)", values: dl.map((r) => r.actual) },
+    { name: "Current", color: "var(--s2)", values: dl.map((r) => r.current) },
+    { name: "Proposed", color: "var(--s1)", values: dl.map((r) => r.proposed) },
+  ], { yfmt: (v) => v.toFixed(1), tfmt: (v) => fmt(v, 3), catName: "Group", label: "double lift chart",
+       extra: (i) => `<br>Loss ratio: current ${(dl[i].loss_ratio_current * 100).toFixed(0)}%, proposed ${(dl[i].loss_ratio_proposed * 100).toFixed(0)}%` });
+  $("#dliftnote").textContent = `Mean absolute gap to actual: current ${fmt(R.double_lift_error.current, 3)}, proposed ${fmt(R.double_lift_error.proposed, 3)}.`;
+
+  renderImpact(imp);
+
+  for (const kind of ["frequency", "severity"]) {
+    $("#cmp-" + kind).innerHTML = table([
+      { h: "Model", f: (r) => r.model },
+      { h: "Params", num: true, f: (r) => r.params },
+      { h: "AIC", num: true, f: (r) => fmt(r.aic, 1) },
+      { h: "Holdout deviance", num: true, f: (r) => fmt(r.holdout_deviance, 1) },
+    ], R.models[kind]);
+  }
+  $("#cmp-pp").innerHTML = table([
+    { h: "Model", f: (r) => r.model.replaceAll("_", " ") },
+    { h: "Gini", num: true, f: (r) => fmt(r.holdout_gini, 3) },
+    { h: "Top/bottom", num: true, f: (r) => fmt(r.lift_ratio, 2) + "x" },
+  ], R.models.pure_premium);
+  $("#lr").innerHTML = table([
+    { h: "Zone", f: (r) => r.level },
+    { h: "Current", num: true, f: (r) => (r.loss_ratio_current * 100).toFixed(1) + "%" },
+    { h: "Proposed", num: true, f: (r) => (r.loss_ratio_proposed * 100).toFixed(1) + "%" },
+  ], R.loss_ratios.territory);
+  const a = R.actual_vs_expected_2way;
+  $("#ae2").innerHTML = table(
+    [{ h: "Age \\ zone", f: (r) => r.label }].concat(a.cols.map((c, j) => ({ h: c, num: true, f: (r) => fmt(r.v[j], 2) }))),
+    a.rows.map((label, i) => ({ label, v: a.ae[i] })));
+  $("#foot").textContent = `Plans: ${Object.values(R.plans).map((p) => `${p.version} (${p.status}, ${p.sha256.slice(0, 10)})`).join(", ")}.`;
+}
+
+function renderRating(out) {
+  const rows = out.steps.map((s) => ({ ...s }));
+  const others = Object.entries(out.other_plans).map(([v, p]) => `${v}: ${money(p, 2)}`).join(", ");
+  $("#rated").innerHTML = `<div class="row"><span class="premium">${money(out.premium, 2)}</span><span class="muted">annual premium, plan ${out.plan_version} (sha256 ${out.plan_sha256.slice(0, 12)})${others ? ", other plans " + others : ""}</span></div>
+  <div class="scroll">${table([
+    { h: "Step", f: (r) => r.factor ? r.factor.replace("_", " ") : "base rate" },
+    { h: "Input", f: (r) => r.input == null ? "" : String(r.input) },
+    { h: "Level", f: (r) => r.level ?? "" },
+    { h: "Multiplier", num: true, f: (r) => r.multiplier == null ? "" : "x " + fmt(r.multiplier, 3) },
+    { h: "Running", num: true, f: (r) => money(r.running, 2) },
+  ], rows)}</div>`;
+}
+
+async function rate(ev) {
+  if (ev) ev.preventDefault();
+  const fd = new FormData($("#rater"));
+  const policy = {};
+  for (const [k, v] of fd.entries()) {
+    if (k === "plan_version") continue;
+    policy[k] = k === "coverage" ? v : k === "multi_policy" ? v === "true" : Number(v);
+  }
+  const r = await fetch("/rate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ policy, plan_version: fd.get("plan_version") }) });
+  const out = await r.json();
+  if (!r.ok) {
+    const msg = Array.isArray(out.detail) ? out.detail.map((d) => d.msg).join("; ") : out.detail;
+    $("#rated").innerHTML = `<p class="err">${msg}</p>`;
+    return;
+  }
+  renderRating(out);
+}
+
+async function main() {
+  const terr = $("select[name=territory]");
+  for (let z = 1; z <= 10; z++) terr.insertAdjacentHTML("beforeend", `<option ${z === 9 ? "selected" : ""}>${z}</option>`);
+  R = await (await fetch("/api/results")).json();
+  const plans = await (await fetch("/api/plans")).json();
+  $("#planver").innerHTML = plans.slice().reverse().map((p) => `<option value="${p.version}">${p.version} (${p.status.replace("_", " ")})</option>`).join("");
+  renderAll();
+  document.querySelectorAll("#relkind button").forEach((b) => b.addEventListener("click", () => {
+    relKind = b.dataset.k;
+    document.querySelectorAll("#relkind button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    relCharts();
+  }));
+  document.querySelectorAll("#capsel button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#capsel button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    loadImpact(b.dataset.c);
+  }));
+  $("#rater").addEventListener("submit", rate);
+  rate();
+}
+main();
+</script>
+</body>
+</html>

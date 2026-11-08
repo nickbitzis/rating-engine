@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Lint
+        run: |
+          uvx ruff check .
+          uvx ruff format --check .
+      - name: Test
+        run: uv run --python 3.12 --group dev pytest -q
+
+  pricing-gate:
+    # Fails the build if main-factor frequency relativities miss the known truth by more than 12%
+    # or the GLM holdout Gini drops below 0.25. Runs the full 200,000 policy-year portfolio.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Relativity and Gini gate
+        run: uv run --python 3.12 ratingengine gate --n 200000 --tolerance 0.12 --gini-floor 0.25 --step-summary
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t rating-engine:ci .
+      - name: Smoke test container
+        run: |
+          # A 20,000 policy book without the boosting benchmark starts in a few seconds.
+          docker run -d --name re -p 8870:8870 -e RE_N_POLICIES=20000 -e RE_GBM=0 rating-engine:ci
+          for i in $(seq 1 90); do curl -sf http://localhost:8870/healthz && break; sleep 2; done
+          curl -sf http://localhost:8870/healthz
+          curl -sf -H 'content-type: application/json' \
+            -d '{"policy":{"driver_age":45,"years_licensed":25,"vehicle_age":6,"vehicle_value":22000,"territory":3,"annual_mileage":9000,"prior_claims":0,"credit_band":2,"multi_policy":true,"coverage":"standard"}}' \
+            http://localhost:8870/rate
+          curl -sf http://localhost:8870/metrics | grep re_ratings_total
+          docker logs re | tail -5
+          docker rm -f re

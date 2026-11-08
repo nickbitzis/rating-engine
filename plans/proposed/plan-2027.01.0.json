@@ -1,0 +1,402 @@
+{
+  "version": "2027.01.0",
+  "effective_date": "2027-01-01",
+  "status": "proposed",
+  "description": "GLM indicated plan: frequency x severity relativities, credibility smoothed, capped, off-balanced to a 70% loss ratio.",
+  "sha256": "b031b9f502e99566c5856194477fe7b3a4603cfb57b731414407f9eef1927f2d",
+  "base_rate": 544.8,
+  "factors": [
+    {
+      "name": "age_band",
+      "input": "driver_age",
+      "levels": [
+        {
+          "label": "16-20",
+          "min": 16,
+          "max": 20,
+          "relativity": 2.25
+        },
+        {
+          "label": "21-24",
+          "min": 21,
+          "max": 24,
+          "relativity": 1.639
+        },
+        {
+          "label": "25-29",
+          "min": 25,
+          "max": 29,
+          "relativity": 1.203
+        },
+        {
+          "label": "30-39",
+          "min": 30,
+          "max": 39,
+          "relativity": 1.0
+        },
+        {
+          "label": "40-49",
+          "min": 40,
+          "max": 49,
+          "relativity": 0.98
+        },
+        {
+          "label": "50-59",
+          "min": 50,
+          "max": 59,
+          "relativity": 0.895
+        },
+        {
+          "label": "60-69",
+          "min": 60,
+          "max": 69,
+          "relativity": 0.986
+        },
+        {
+          "label": "70+",
+          "min": 70,
+          "max": 95,
+          "relativity": 1.215
+        }
+      ]
+    },
+    {
+      "name": "experience",
+      "input": "years_licensed",
+      "levels": [
+        {
+          "label": "0-2",
+          "min": 0,
+          "max": 2,
+          "relativity": 1.371
+        },
+        {
+          "label": "3-5",
+          "min": 3,
+          "max": 5,
+          "relativity": 1.096
+        },
+        {
+          "label": "6+",
+          "min": 6,
+          "max": null,
+          "relativity": 1.0
+        }
+      ]
+    },
+    {
+      "name": "vehicle_age",
+      "input": "vehicle_age",
+      "levels": [
+        {
+          "label": "0-3",
+          "min": 0,
+          "max": 3,
+          "relativity": 1.0
+        },
+        {
+          "label": "4-7",
+          "min": 4,
+          "max": 7,
+          "relativity": 0.852
+        },
+        {
+          "label": "8-12",
+          "min": 8,
+          "max": 12,
+          "relativity": 0.865
+        },
+        {
+          "label": "13+",
+          "min": 13,
+          "max": null,
+          "relativity": 0.81
+        }
+      ]
+    },
+    {
+      "name": "value_band",
+      "input": "vehicle_value",
+      "levels": [
+        {
+          "label": "<15k",
+          "min": 0,
+          "max": 14999,
+          "relativity": 0.824
+        },
+        {
+          "label": "15-30k",
+          "min": 15000,
+          "max": 29999,
+          "relativity": 1.0
+        },
+        {
+          "label": "30-50k",
+          "min": 30000,
+          "max": 49999,
+          "relativity": 1.166
+        },
+        {
+          "label": "50k+",
+          "min": 50000,
+          "max": null,
+          "relativity": 1.428
+        }
+      ]
+    },
+    {
+      "name": "territory",
+      "input": "territory",
+      "levels": [
+        {
+          "label": "1-2",
+          "values": [
+            1,
+            2
+          ],
+          "relativity": 0.837
+        },
+        {
+          "label": "3",
+          "values": [
+            3
+          ],
+          "relativity": 0.962
+        },
+        {
+          "label": "4",
+          "values": [
+            4
+          ],
+          "relativity": 1.0
+        },
+        {
+          "label": "5",
+          "values": [
+            5
+          ],
+          "relativity": 1.161
+        },
+        {
+          "label": "6",
+          "values": [
+            6
+          ],
+          "relativity": 1.22
+        },
+        {
+          "label": "7",
+          "values": [
+            7
+          ],
+          "relativity": 1.323
+        },
+        {
+          "label": "8",
+          "values": [
+            8
+          ],
+          "relativity": 1.466
+        },
+        {
+          "label": "9-10",
+          "values": [
+            9,
+            10
+          ],
+          "relativity": 1.698
+        }
+      ]
+    },
+    {
+      "name": "mileage",
+      "input": "annual_mileage",
+      "levels": [
+        {
+          "label": "<7.5k",
+          "min": 0,
+          "max": 7499,
+          "relativity": 0.851
+        },
+        {
+          "label": "7.5-12k",
+          "min": 7500,
+          "max": 11999,
+          "relativity": 1.0
+        },
+        {
+          "label": "12-18k",
+          "min": 12000,
+          "max": 17999,
+          "relativity": 1.126
+        },
+        {
+          "label": "18k+",
+          "min": 18000,
+          "max": null,
+          "relativity": 1.337
+        }
+      ]
+    },
+    {
+      "name": "prior_claims",
+      "input": "prior_claims",
+      "levels": [
+        {
+          "label": "0",
+          "min": 0,
+          "max": 0,
+          "relativity": 1.0
+        },
+        {
+          "label": "1",
+          "min": 1,
+          "max": 1,
+          "relativity": 1.328
+        },
+        {
+          "label": "2+",
+          "min": 2,
+          "max": null,
+          "relativity": 1.668
+        }
+      ]
+    },
+    {
+      "name": "credit_band",
+      "input": "credit_band",
+      "levels": [
+        {
+          "label": "1",
+          "values": [
+            1
+          ],
+          "relativity": 0.811
+        },
+        {
+          "label": "2",
+          "values": [
+            2
+          ],
+          "relativity": 0.932
+        },
+        {
+          "label": "3",
+          "values": [
+            3
+          ],
+          "relativity": 1.0
+        },
+        {
+          "label": "4",
+          "values": [
+            4
+          ],
+          "relativity": 1.117
+        },
+        {
+          "label": "5",
+          "values": [
+            5
+          ],
+          "relativity": 1.376
+        }
+      ]
+    },
+    {
+      "name": "coverage",
+      "input": "coverage",
+      "levels": [
+        {
+          "label": "liability",
+          "values": [
+            "liability"
+          ],
+          "relativity": 0.655
+        },
+        {
+          "label": "standard",
+          "values": [
+            "standard"
+          ],
+          "relativity": 1.0
+        },
+        {
+          "label": "full",
+          "values": [
+            "full"
+          ],
+          "relativity": 1.233
+        }
+      ]
+    }
+  ],
+  "discounts": [
+    {
+      "name": "multi_policy",
+      "input": "multi_policy",
+      "rate": 0.103
+    }
+  ],
+  "notes": {
+    "target_loss_ratio": 0.7,
+    "base_pure_premium": 372.8746,
+    "indicated_base_rate": 532.6781,
+    "off_balance_factor": 1.0228,
+    "target_premium": 127799461.9857,
+    "achieved_premium": 127799835.7938,
+    "relativity_cap": [
+      0.45,
+      2.25
+    ],
+    "capped_levels": [
+      {
+        "factor": "age_band",
+        "level": "16-20",
+        "before": 2.58,
+        "after": 2.25
+      }
+    ],
+    "smoothed_levels": [
+      {
+        "factor": "age_band",
+        "level": "21-24",
+        "fitted": 1.639,
+        "smoothed": 1.639,
+        "complement": 1.45,
+        "credibility": 0.998
+      },
+      {
+        "factor": "experience",
+        "level": "3-5",
+        "fitted": 1.117,
+        "smoothed": 1.096,
+        "complement": 1.0,
+        "credibility": 0.819
+      },
+      {
+        "factor": "territory",
+        "level": "1-2",
+        "fitted": 0.836,
+        "smoothed": 0.837,
+        "complement": 0.869,
+        "credibility": 0.986
+      },
+      {
+        "factor": "prior_claims",
+        "level": "2+",
+        "fitted": 1.703,
+        "smoothed": 1.668,
+        "complement": 1.5,
+        "credibility": 0.826
+      }
+    ],
+    "excluded_factors": {
+      "vehicle_color": "not a permitted rating factor and no signal"
+    },
+    "fitted_on": {
+      "policies": 140280,
+      "claims": 11825
+    }
+  }
+}
